@@ -1,6 +1,6 @@
 <?php
 
-//namespace PHPHelpers;
+namespace PHPHelpers;
 
 /**
  * Version 0.12
