@@ -1,0 +1,19 @@
+{
+    "name": "djanym/phphelpers",
+    "description": "A set of common functions used in most projects",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Nael Concescu",
+            "homepage": "https://cv.nael.pro"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": "^5.6 || ^7.3 || ^8.0"
+    },
+    "autoload": {
+        "classmap": ["PHPHelpers.php"]
+    }
+}
