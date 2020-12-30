@@ -1,4 +1,7 @@
 <?php
+
+//namespace PHPHelpers;
+
 /**
  * Version 0.12
  */
