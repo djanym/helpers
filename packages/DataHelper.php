@@ -34,28 +34,4 @@ class DataHelper
         }
         return true;
     }
-
-    /**
-     *
-     */
-    public static function flipArray(array $a1)
-    {
-        $a2 = [];
-        foreach ($a1 as $key => $value) {
-            if (is_array($value)) {
-                $a2[] = self::flipArray($value);
-            } elseif (isset($a2[$value])) {
-                if (is_array($a2[$value])) {
-                    $a2[$value][] = $key;
-                } else {
-                    $_tmp = $a2[$value];
-                    $a2[$value] = [$_tmp];
-                    $a2[$value][] = $key;
-                }
-            } else {
-                $a2[$value] = $key;
-            }
-        }
-        return $a2;
-    }
 }
