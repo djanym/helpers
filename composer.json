@@ -17,6 +17,7 @@
     "autoload": {
         "psr-4": {
             "Ricubai\\PHPHelpers\\": "packages/"
-        }
+        },
+        "files": ["packages/functions.php"]
     }
 }
