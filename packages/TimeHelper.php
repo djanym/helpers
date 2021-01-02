@@ -2,7 +2,7 @@
 
 namespace Ricubai\PHPHelpers;
 
-class TimeHelper
+abstract class TimeHelper
 {
     /**
      * Retrieves the current time based on specified type.
@@ -20,6 +20,7 @@ class TimeHelper
 
         if ('mysql' === $type) {
             $type = 'Y-m-d H:i:s';
+            return date($type, time());
         }
     }
 }
