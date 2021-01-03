@@ -43,8 +43,8 @@ class DataHelper
      */
     public static function esc_html($text, $echo = true)
     {
-        $safe_text = wp_check_invalid_utf8($text);
-        $safe_text = _wp_specialchars($safe_text, ENT_QUOTES);
+        $safe_text = self::check_invalid_utf8($text);
+        $safe_text = self::htmlspecialchars($safe_text, ENT_QUOTES);
         if ($echo) {
             echo $safe_text;
         } else {
@@ -85,5 +85,48 @@ class DataHelper
         }
 
         return '';
+    }
+
+    /**
+     * Converts a number of special characters into their HTML entities.
+     * Specifically deals with: &, <, >, ", and '.
+     *
+     * $quote_style can be set to ENT_COMPAT to encode " to
+     * &quot;, or ENT_QUOTES to do both. Default is ENT_NOQUOTES where no quotes are encoded.
+     *
+     * @param string $string The text which is to be encoded.
+     * @param int|string $quote_style Optional. Converts double quotes if set to ENT_COMPAT,
+     *                                    both single and double if set to ENT_QUOTES or none if set to ENT_NOQUOTES.
+     *                                    Check PHP manual for htmlspecialchars() function.
+     *                                    Default is ENT_NOQUOTES.
+     * @param false|string $charset Optional. The character encoding of the string. Default is false.
+     * @param bool $double_encode Optional. Whether to encode existing html entities. Default is false.
+     * @return string The encoded text with HTML entities.
+     *
+     * @staticvar string $_charset
+     */
+    private static function htmlspecialchars($string, $quote_style = ENT_NOQUOTES, $charset = 'UTF-8', $double_encode = false)
+    {
+        $string = (string)$string;
+
+        if ($string === '') {
+            return '';
+        }
+
+        // Skip if there are no specialchars
+        if (!preg_match('/[&<>"\']/', $string)) {
+            return $string;
+        }
+
+        // Account for the previous behaviour of the function when the $quote_style is not an accepted value
+        if (empty($quote_style)) {
+            $quote_style = ENT_NOQUOTES;
+        } elseif (!in_array($quote_style, array(0, 2, 3, 'single', 'double'), true)) {
+            $quote_style = ENT_QUOTES;
+        }
+
+        $string = htmlspecialchars($string, $quote_style, $charset, $double_encode);
+
+        return $string;
     }
 }
