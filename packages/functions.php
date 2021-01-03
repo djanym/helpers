@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * Add short alias for DataHelper.
+ * Useful for using DataHelper class in theme files to avoid using class full path.
+ */
+if (!class_exists('DH')) {
+    class_alias('\Ricubai\PHPHelpers\DataHelper', 'DH');
+}
+
 if (!function_exists('is_error')):
     /**
      * Check whether variable is a FormError.
@@ -11,14 +19,4 @@ if (!function_exists('is_error')):
     {
         return ($thing instanceof \Ricubai\PHPHelpers\FormError);
     }
-endif;
-
-if (!function_exists('dh')):
-    /**
-     * Short alias for DataHelper class.
-     */
-function dh()
-{
-    return \Ricubai\PHPHelpers\DataHelper::class;
-}
 endif;

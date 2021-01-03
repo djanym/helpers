@@ -4,7 +4,7 @@ namespace Ricubai\PHPHelpers;
 
 use Valitron\Validator;
 
-abstract class DataHelper
+class DataHelper
 {
     /**
      * Validates a form $_POST data using $fields array.
@@ -41,10 +41,14 @@ abstract class DataHelper
      * @param $text
      * @return mixed
      */
-    public static function esc_html($text)
+    public static function esc_html($text, $echo = true)
     {
         $safe_text = wp_check_invalid_utf8($text);
         $safe_text = _wp_specialchars($safe_text, ENT_QUOTES);
-        return $safe_text;
+        if ($echo) {
+            echo $safe_text;
+        } else {
+            return $safe_text;
+        }
     }
 }
