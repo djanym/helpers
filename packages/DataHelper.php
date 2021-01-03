@@ -4,7 +4,7 @@ namespace Ricubai\PHPHelpers;
 
 use Valitron\Validator;
 
-class DataHelper
+abstract class DataHelper
 {
     /**
      * Validates a form $_POST data using $fields array.
@@ -33,5 +33,18 @@ class DataHelper
             return $v->errors();
         }
         return true;
+    }
+
+    /**
+     * Escapes HTML blocks.
+     *
+     * @param $text
+     * @return mixed
+     */
+    public static function esc_html($text)
+    {
+        $safe_text = wp_check_invalid_utf8($text);
+        $safe_text = _wp_specialchars($safe_text, ENT_QUOTES);
+        return $safe_text;
     }
 }

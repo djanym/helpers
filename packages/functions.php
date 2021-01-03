@@ -12,3 +12,13 @@ if (!function_exists('is_error')):
         return ($thing instanceof \Ricubai\PHPHelpers\FormError);
     }
 endif;
+
+if (!function_exists('dh')):
+    /**
+     * Short alias for DataHelper class.
+     */
+function dh()
+{
+    return \Ricubai\PHPHelpers\DataHelper::class;
+}
+endif;
