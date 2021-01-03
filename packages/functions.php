@@ -1,5 +1,8 @@
 <?php
 
+use Ricubai\PHPHelpers\LangHelper;
+use Ricubai\PHPHelpers\DataHelper;
+
 /**
  * Add short alias for DataHelper.
  * Useful for using DataHelper class in theme files to avoid using class full path.
@@ -18,5 +21,55 @@ if (!function_exists('is_error')):
     function is_error($thing)
     {
         return ($thing instanceof \Ricubai\PHPHelpers\FormError);
+    }
+endif;
+
+if (!function_exists('_e')):
+    /**
+     * Display translated text.
+     *
+     * @param string $text Text to translate.
+     * @param string $domain Optional. Text domain. Unique identifier for retrieving translated strings.
+     *                       Default 'default'.
+     */
+    function _e($text, $domain = 'default')
+    {
+        echo LangHelper::__($text, $domain);
+    }
+endif;
+
+if (!function_exists('esc_html_e')):
+    /**
+     * Display translated text that has been escaped for safe use in HTML output.
+     *
+     * @param string $text Text to translate.
+     * @param string $domain Optional. Text domain. Unique identifier for retrieving translated strings.
+     *                       Default 'default'.
+     * @since 2.8.0
+     *
+     */
+    function esc_html_e($text, $domain = 'default')
+    {
+        echo DataHelper::esc_html(
+            LangHelper::__($text, $domain)
+        );
+    }
+endif;
+
+if (!function_exists('esc_attr_e')):
+    /**
+     * Display translated text that has been escaped for safe use in an attribute.
+     *
+     * @param string $text Text to translate.
+     * @param string $domain Optional. Text domain. Unique identifier for retrieving translated strings.
+     *                       Default 'default'.
+     * @since 2.8.0
+     *
+     */
+    function esc_attr_e($text, $domain = 'default')
+    {
+        echo DataHelper::esc_attr(
+            LangHelper::__($text, $domain)
+        );
     }
 endif;
