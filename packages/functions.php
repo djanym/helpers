@@ -38,6 +38,23 @@ if (!function_exists('_e')):
     }
 endif;
 
+if (!function_exists('_x')):
+    /**
+     * Retrieve translated string with gettext context.
+     * Short alias for LangHelper::_x().
+     *
+     * @param string $text Text to translate.
+     * @param string $context Context information for the translators.
+     * @param string $domain Optional. Text domain. Unique identifier for retrieving translated strings.
+     *                        Default 'default'.
+     * @return string Translated context string without pipe.
+     */
+    function _x($text, $context, $domain = 'default')
+    {
+        return LangHelper::_x($text, $context, $domain);
+    }
+endif;
+
 if (!function_exists('esc_html_e')):
     /**
      * Display translated text that has been escaped for safe use in HTML output.
