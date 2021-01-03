@@ -51,4 +51,39 @@ class DataHelper
             return $safe_text;
         }
     }
+
+    /**
+     * Checks for invalid UTF8 in a string.
+     *
+     * @param string $string The text which is to be checked.
+     * @return string The checked text.
+     *
+     * @staticvar bool $utf8_pcre
+     */
+    private static function check_invalid_utf8($string)
+    {
+        $string = (string)$string;
+
+        if ($string === '') {
+            return '';
+        }
+
+        // Check for support for utf8 in the installed PCRE library once and store the result in a static
+        static $utf8_pcre = null;
+        if (!isset($utf8_pcre)) {
+            $utf8_pcre = @preg_match('/^./u', 'a');
+        }
+
+        // We can't demand utf8 in the PCRE installation, so just return the string in those cases
+        if (!$utf8_pcre) {
+            return $string;
+        }
+
+        // preg_match fails when it encounters invalid UTF8 in $string
+        if (1 === @preg_match('/^./us', $string)) {
+            return $string;
+        }
+
+        return '';
+    }
 }
