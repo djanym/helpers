@@ -39,7 +39,7 @@ class DataHelper
      * Escapes HTML blocks.
      *
      * @param $text
-     * @return mixed
+     * @return string
      */
     public static function esc_html($text, $echo = true)
     {
@@ -50,6 +50,30 @@ class DataHelper
         } else {
             return $safe_text;
         }
+    }
+
+    /**
+     * Escapes for HTML tag attributes.
+     *
+     * @param string $text
+     * @return string
+     */
+    public static function esc_attr($text)
+    {
+        $safe_text = self::check_invalid_utf8($text);
+        $safe_text = self::htmlspecialchars($safe_text, ENT_QUOTES);
+        return $safe_text;
+    }
+
+    /**
+     * Escapes for HTML textarea values.
+     *
+     * @param string $text
+     * @return string
+     */
+    public static function esc_textarea($text)
+    {
+        return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
     }
 
     /**
