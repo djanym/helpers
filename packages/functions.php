@@ -24,6 +24,20 @@ if (!function_exists('is_error')):
     }
 endif;
 
+if (!function_exists('__')):
+    /**
+     * Return translated text.
+     *
+     * @param string $text Text to translate.
+     * @param string $domain Optional. Text domain. Unique identifier for retrieving translated strings.
+     *                       Default 'default'.
+     */
+    function __($text, $domain = 'default')
+    {
+        return LangHelper::__($text, $domain);
+    }
+endif;
+
 if (!function_exists('_e')):
     /**
      * Display translated text.

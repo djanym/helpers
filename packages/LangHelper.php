@@ -69,7 +69,7 @@ class LangHelper
      */
     private static function translate_with_gettext_context($text, $context, $domain = 'default')
     {
-        $translations = get_translations_for_domain($domain);
+        $translations = self::get_translations_for_domain($domain);
         $translation = $translations->translate($text, $context);
         return $translation;
     }
