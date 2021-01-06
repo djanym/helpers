@@ -11,6 +11,14 @@ if (!class_exists('DH')) {
     class_alias('\Ricubai\PHPHelpers\DataHelper', 'DH');
 }
 
+/**
+ * Add short alias for TemplateHelper.
+ * Useful for using TemplateHelper class in theme files to avoid using class full path.
+ */
+if (!class_exists('TPL')) {
+    class_alias('\Ricubai\PHPHelpers\TemplateHelper', 'TPL');
+}
+
 if (!function_exists('is_error')):
     /**
      * Check whether variable is a FormError.
