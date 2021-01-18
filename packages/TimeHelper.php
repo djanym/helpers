@@ -2,7 +2,7 @@
 
 namespace Ricubai\PHPHelpers;
 
-abstract class TimeHelper
+class TimeHelper
 {
     /**
      * Retrieves the current time based on specified type.
