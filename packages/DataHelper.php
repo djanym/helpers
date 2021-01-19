@@ -77,6 +77,76 @@ class DataHelper
     }
 
     /**
+     * Escapes data for use in a MySQL query.
+     *
+     * Usually you should prepare queries using wpdb::prepare().
+     * Sometimes, spot-escaping is required or useful. One example
+     * is preparing an array for use in an IN clause.
+     *
+     * NOTE: Since 4.8.3, '%' characters will be replaced with a placeholder string,
+     * this prevents certain SQLi attacks from taking place. This change in behaviour
+     * may cause issues for code that expects the return value of esc_sql() to be useable
+     * for other purposes.
+     *
+     * @param string|array $data Unescaped data
+     * @return string|array Escaped data
+     */
+    public static function esc_sql($data, $con)
+    {
+        if (is_array($data)) {
+            foreach ($data as $k => $v) {
+                if (is_array($v)) {
+                    $data[$k] = self::esc_sql($v);
+                } else {
+                    $data[$k] = mysqli_real_escape_string($con, $v);
+                }
+            }
+        } else {
+            $data = mysqli_real_escape_string($con, $data);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Serialize data, if needed.
+     *
+     * @param string|array|object $data Data that might be serialized.
+     * @return mixed A scalar data
+     * @since 2.0.5
+     *
+     */
+    public static function maybe_serialize($data)
+    {
+        if (is_array($data) || is_object($data)) {
+            return serialize($data);
+        }
+
+        // Double serialization is required for backward compatibility.
+        // See https://core.trac.wordpress.org/ticket/12930
+        // Also the world will end. See WP 3.6.1.
+//        if (self::is_serialized($data, false)) {
+//            return serialize($data);
+//        }
+
+        return $data;
+    }
+
+    /**
+     * Unserialize value only if it was serialized.
+     *
+     * @param string $original Maybe unserialized original, if is needed.
+     * @return mixed Unserialized data can be any type.
+     */
+    public static function maybe_unserialize($original)
+    {
+        if (self::is_serialized($original)) { // don't attempt to unserialize data that wasn't serialized going in
+            return @unserialize($original, ['allowed_classes' => []]);
+        }
+        return $original;
+    }
+
+    /**
      * Checks for invalid UTF8 in a string.
      *
      * @param string $string The text which is to be checked.
@@ -152,5 +222,74 @@ class DataHelper
         $string = htmlspecialchars($string, $quote_style, $charset, $double_encode);
 
         return $string;
+    }
+
+    /**
+     * Check value to find if it was serialized.
+     *
+     * If $data is not an string, then returned value will always be false.
+     * Serialized data is always a string.
+     *
+     * @param string $data Value to check to see if was serialized.
+     * @param bool $strict Optional. Whether to be strict about the end of the string. Default true.
+     * @return bool False if not serialized and true if it was.
+     */
+    private static function is_serialized($data, $strict = true)
+    {
+        // if it isn't a string, it isn't serialized.
+        if (!is_string($data)) {
+            return false;
+        }
+        $data = trim($data);
+        if ('N;' == $data) {
+            return true;
+        }
+        if (strlen($data) < 4) {
+            return false;
+        }
+        if (':' !== $data[1]) {
+            return false;
+        }
+        if ($strict) {
+            $lastc = substr($data, -1);
+            if (';' !== $lastc && '}' !== $lastc) {
+                return false;
+            }
+        } else {
+            $semicolon = strpos($data, ';');
+            $brace = strpos($data, '}');
+            // Either ; or } must exist.
+            if (false === $semicolon && false === $brace) {
+                return false;
+            }
+            // But neither must be in the first X characters.
+            if (false !== $semicolon && $semicolon < 3) {
+                return false;
+            }
+            if (false !== $brace && $brace < 4) {
+                return false;
+            }
+        }
+        $token = $data[0];
+        switch ($token) {
+            case 's':
+                if ($strict) {
+                    if ('"' !== substr($data, -2, 1)) {
+                        return false;
+                    }
+                } elseif (false === strpos($data, '"')) {
+                    return false;
+                }
+            // or else fall through
+            case 'a':
+            case 'O':
+                return (bool)preg_match("/^{$token}:[0-9]+:/s", $data);
+            case 'b':
+            case 'i':
+            case 'd':
+                $end = $strict ? '$' : '';
+                return (bool)preg_match("/^{$token}:[0-9.E+-]+;$end/", $data);
+        }
+        return false;
     }
 }
