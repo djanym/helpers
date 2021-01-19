@@ -147,6 +147,35 @@ class DataHelper
     }
 
     /**
+     * Get hash of given string.
+     *
+     * @param string $data Plain text to hash
+     * @param string $scheme Authentication scheme (secure_auth, logged_in, nonce)
+     * @return string Hash of $data
+     */
+    public static function get_hash($data, $scheme = 'secure_auth')
+    {
+        $salt = self::get_salt($scheme);
+        return hash_hmac('md5', $data, $salt);
+    }
+
+    /**
+     * Returns a salt to add to hashes.
+     *
+     * Salting passwords helps against tools which has stored hashed values of
+     * common dictionary strings. The added values makes it harder to crack.
+     *
+     * @param string $scheme Authentication scheme (auth, secure_auth, logged_in, nonce)
+     * @return string Salt value
+     */
+    public static function get_salt($scheme = 'secure_auth')
+    {
+        $const_key = strtoupper("{$scheme}_key");
+        $const_salt = strtoupper("{$scheme}_salt");
+        return constant($const_key) . constant($const_salt);
+    }
+
+    /**
      * Checks for invalid UTF8 in a string.
      *
      * @param string $string The text which is to be checked.
