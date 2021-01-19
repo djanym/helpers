@@ -31,13 +31,10 @@ class BladeExt extends BladeOne
     }
 
     /**
-     * Compile the view at the given path.
+     * Compile the given Blade template contents.
      *
-     * @param string $templateName The name of the template. Example folder.template
-     * @param bool $forced If the compilation will be forced (always compile) or not.
-     * @return boolean|string True if the operation was correct, or false (if not exception)
-     *                             if it fails. It returns a string (the content compiled) if isCompiled=false
-     * @throws Exception
+     * @param string $value
+     * @return string
      */
     public function compileString($value)
     {
@@ -54,8 +51,10 @@ class BladeExt extends BladeOne
             . '\@enddynamicblock\( *(\k<block_name>) *\))/is',
             static function ($matches) {
 //                print_r($matches);
-                $out = $matches['block_content'];
-                return '---'.$out.'===';
+                $out = '@foreach($courses as $item)'."\n";
+                $out .= $matches['block_content']."\n";
+                $out .= '@endforeach()'."\n";
+                return $out;
 
                 $args = explode(',', $matches[1]);
                 $value = '';
