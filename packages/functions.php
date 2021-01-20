@@ -77,6 +77,19 @@ if (!function_exists('_x')):
     }
 endif;
 
+if (!function_exists('esc_html')):
+    /**
+     * Escapes HTML blocks.
+     *
+     * @param $text
+     * @return string
+     */
+    function esc_html($text)
+    {
+        return DataHelper::esc_html($text);
+    }
+endif;
+
 if (!function_exists('esc_html_e')):
     /**
      * Display translated text that has been escaped for safe use in HTML output.
