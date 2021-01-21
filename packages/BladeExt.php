@@ -57,9 +57,9 @@ class BladeExt extends BladeOne
                 $out .= "\n";
 
                 // Add common Blade @foreach loop
-                $out .= '@foreach($courses as $item)'."\n";
-                $out .= $matches['block_content']."\n";
-                $out .= '@endforeach()'."\n";
+                $out .= '@foreach($courses as $item)' . "\n";
+                $out .= $matches['block_content'] . "\n";
+                $out .= '@endforeach()' . "\n";
                 return $out;
 
                 $args = explode(',', $matches[1]);
@@ -85,13 +85,24 @@ class BladeExt extends BladeOne
     {
         // Replaces provided format of variables to JS templating syntax.
         $html = preg_replace_callback(
-            '/(?<tag_syntax>\{\{|\{\!\!) *(?<content>(\$(?<varname1>[\w\d]+)(\[\'(?<varname2>[\w\d]+)\'\])){0,1} *\|*[^\!\}]*) *(\!\!\}|\}\})/is',
+            '/(?<open_tag>\{\{|\{\!\!) *(?<content>(\$(?<varname1>[\w\d]+)(\[\'(?<varname2>[\w\d]+)\'\])){0,1} *\|*[^\!\}]*) *(?<close_tag>\!\!\}|\}\})/is',
             static function ($matches) {
-                print_r($matches); die;
-                $args = explode(',', $matches[1]);
-                $value = '';
-                $var = $args[0];
-                return '{{' . $var . '}}';
+                $open_tag = trim($matches['open_tag']);
+                if (trim($matches['open_tag']) === '{!!') {
+                    $open_tag = '{{{';
+                    $close_tag = '}}}';
+                } else {
+                    $open_tag = '{{';
+                    $close_tag = '}}';
+                }
+                if (trim($matches['varname2'])) {
+                    $var = trim($matches['varname2']);
+                } elseif (trim($matches['varname1'])) {
+                    $var = trim($matches['varname1']);
+                } else {
+                    return $matches[0];
+                }
+                return '@' . $open_tag . $var . $close_tag;
             },
             $html
         );
