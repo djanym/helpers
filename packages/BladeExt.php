@@ -85,7 +85,7 @@ class BladeExt extends BladeOne
     {
         // Replaces provided format of variables to JS templating syntax.
         $html = preg_replace_callback(
-            '/(?<open_tag>\{\{|\{\!\!) *(?<content>(\$(?<varname1>[\w\d]+)(\[\'(?<varname2>[\w\d]+)\'\])){0,1} *\|*[^\!\}]*) *(?<close_tag>\!\!\}|\}\})/is',
+            '/(?<open_tag>\{\{|\{\!\!) *(?<content>\$(?<varname1>[\w\d]+)(\[\'(?<varname2>[\w\d]+)\'\]){0,1} *\|*[^\!\}]*) *(?<close_tag>\!\!\}|\}\})/is',
             static function ($matches) {
                 $open_tag = trim($matches['open_tag']);
                 if (trim($matches['open_tag']) === '{!!') {
