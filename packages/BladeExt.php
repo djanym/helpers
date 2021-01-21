@@ -51,9 +51,13 @@ class BladeExt extends BladeOne
             . '\@enddynamicblock\( *(\k<block_name>) *\))/is',
             static function ($matches) {
                 $out = '';
-//                print_r($matches);
+                if( ! trim($matches['block_name']) ){
+                    $block_name = \DH::rand();
+                } else {
+                    $block_name = trim($matches['block_name']);
+                }
                 // Add JS tpl.
-                $out = self::convertToPredifenedJsTemplating($matches['block_content']);
+                $out = self::convertToPredifenedJsTemplate($matches['block_content'], $block_name);
                 $out .= "\n";
 
                 // Add common Blade @foreach loop
@@ -81,7 +85,7 @@ class BladeExt extends BladeOne
      * @param $html
      * @return string|string[]|null
      */
-    private static function convertToPredifenedJsTemplating($html, $name = '')
+    private static function convertToPredifenedJsTemplate($html, $name)
     {
         // Replaces provided format of variables to JS templating syntax.
         $html = preg_replace_callback(
@@ -107,7 +111,9 @@ class BladeExt extends BladeOne
             $html
         );
 
-        return '<div id="course_template" style="display: none;">' . $html . '</div>';
+        $tpl_id = $name.'_template';
+
+        return '<div id="'.$tpl_id.'" style="display: none;">' . $html . '</div>';
     }
 
     /**
