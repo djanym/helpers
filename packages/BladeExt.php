@@ -7,8 +7,8 @@ use InvalidArgumentException;
 
 class BladeExt extends BladeOne
 {
-    /** @var array The stack of in-progress sections. */
-    protected $dynamicBlockStack = [];
+    /** @var string The "regular" / legacy echo string format. */
+    protected $echoFormat = '\esc_html(%s)';
 
     /**
      * We create the new tags @hello <br>
@@ -50,8 +50,14 @@ class BladeExt extends BladeOne
             . '(?<block_content>[\w\W]+)'
             . '\@enddynamicblock\( *(\k<block_name>) *\))/is',
             static function ($matches) {
+                $out = '';
 //                print_r($matches);
-                $out = '@foreach($courses as $item)'."\n";
+                // Add JS tpl.
+                $out = self::convertToPredifenedJsTemplating($matches['block_content']);
+                $out .= "\n";
+
+                // Add common Blade @foreach loop
+                $out .= '@foreach($courses as $item)'."\n";
                 $out .= $matches['block_content']."\n";
                 $out .= '@endforeach()'."\n";
                 return $out;
@@ -65,6 +71,32 @@ class BladeExt extends BladeOne
         );
 
         return $html;
+    }
+
+    /**
+     * Converts reusable block html to HTML which will be used for JS templating.
+     * Depends on JS templating library.
+     * Currently `Handlebars" is using.
+     *
+     * @param $html
+     * @return string|string[]|null
+     */
+    private static function convertToPredifenedJsTemplating($html, $name = '')
+    {
+        // Replaces provided format of variables to JS templating syntax.
+        $html = preg_replace_callback(
+            '/(?<tag_syntax>\{\{|\{\!\!) *(?<content>(\$(?<varname1>[\w\d]+)(\[\'(?<varname2>[\w\d]+)\'\])){0,1} *\|*[^\!\}]*) *(\!\!\}|\}\})/is',
+            static function ($matches) {
+                print_r($matches); die;
+                $args = explode(',', $matches[1]);
+                $value = '';
+                $var = $args[0];
+                return '{{' . $var . '}}';
+            },
+            $html
+        );
+
+        return '<div id="course_template" style="display: none;">' . $html . '</div>';
     }
 
     /**
@@ -165,31 +197,6 @@ class BladeExt extends BladeOne
         foreach ($items as $item) {
             echo self::replaceVars($html, $item);
         }
-    }
-
-    /**
-     * Converts reusable block html to HTML which will be used for JS templating.
-     * Depends on JS templating library.
-     * Currently `Handlebars" is using.
-     *
-     * @param $html
-     * @return string|string[]|null
-     */
-    private static function convertToPredifenedJsTemplating($html)
-    {
-        // Replaces provided format of variables to JS templating syntax.
-        $html = preg_replace_callback(
-            '/\{\{([\w\d,]+)\}\}/is',
-            static function ($matches) {
-                $args = explode(',', $matches[1]);
-                $value = '';
-                $var = $args[0];
-                return '{{' . $var . '}}';
-            },
-            $html
-        );
-
-        return '<div id="course_template" style="display: none;">' . $html . '</div>';
     }
 
     private static function replaceVars($html, $data)
