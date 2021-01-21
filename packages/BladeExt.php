@@ -50,25 +50,24 @@ class BladeExt extends BladeOne
             . '(?<block_content>[\w\W]+)'
             . '\@enddynamicblock\( *(\k<block_name>) *\))/is',
             static function ($matches) {
-                $out = '';
-                if( ! trim($matches['block_name']) ){
+                if (!trim($matches['block_name'])) {
                     $block_name = \DH::rand();
                 } else {
                     $block_name = trim($matches['block_name']);
                 }
+
+                // Create a div container for the whole block
+                $out = '<div id="' . $block_name . '_container">' . "\n";
+
                 // Add JS tpl.
-                $out = self::convertToPredifenedJsTemplate($matches['block_content'], $block_name);
+                $out .= self::convertToPredifenedJsTemplate($matches['block_content'], $block_name);
                 $out .= "\n";
 
                 // Add common Blade @foreach loop
                 $out .= '@foreach($courses as $item)' . "\n";
                 $out .= $matches['block_content'] . "\n";
                 $out .= '@endforeach()' . "\n";
-                return $out;
-
-                $args = explode(',', $matches[1]);
-                $value = '';
-                $var = $args[0];
+                $out .= '</div>' . "\n";
                 return $out;
             },
             $html
@@ -111,9 +110,9 @@ class BladeExt extends BladeOne
             $html
         );
 
-        $tpl_id = $name.'_template';
+        $tpl_id = $name . '_template';
 
-        return '<div id="'.$tpl_id.'" style="display: none;">' . $html . '</div>';
+        return '<div id="' . $tpl_id . '" style="display: none;">' . $html . '</div>';
     }
 
     /**
