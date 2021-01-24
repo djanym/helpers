@@ -11,27 +11,7 @@ class BladeExt extends BladeOne
     protected $echoFormat = '\esc_html(%s)';
 
     /**
-     * We create the new tags @hello <br>
-     * The name of the method must starts with "compile"<br>
-     * <b>Example:</b><br>
-     * <pre>
-     * @hello()
-     * @hello("name")
-     * </pre>
-     *
-     * @param null|string $expression expects a value like null, (), ("hello") or ($somevar)
-     * @return string returns a fragment of code (php and html)
-     */
-    public function compileHello($expression = null)
-    {
-        if ($expression === null || $expression === '()') {
-            return "<?php echo '--empty--'; ?>";
-        }
-        return "<?php echo 'Hello '.$expression; ?>";
-    }
-
-    /**
-     * Compile the given Blade template contents.
+     * Change template content before Blade compile it.
      *
      * @param string $value
      * @return string
