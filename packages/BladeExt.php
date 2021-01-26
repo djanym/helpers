@@ -68,6 +68,103 @@ class BladeExt extends BladeOne
     {
         // Replaces provided format of variables to JS templating syntax.
         $html = preg_replace_callback(
+            '/(?<open_tag>\{\{|\{\!\!) *(?<content>.*) *(?<close_tag>\!\!\}|\}\})/isUm',
+            'self::processBlade2JsSyntax',
+            $html
+        );
+
+        $tpl_id = $name . '_template';
+
+        return '<div id="' . $tpl_id . '" style="display: none;">' . $html . '</div>';
+    }
+
+    /**
+     * Converts reusable block html to HTML which will be used for JS templating.
+     * Depends on JS templating library.
+     * Currently `EJS" (https://ejs.co) is using.
+     *
+     * @param $html
+     * @return string|string[]|null
+     */
+    private static function processBlade2JsSyntax($matches)
+    {
+        if (trim($matches['open_tag']) === '{!!') {
+            $open_tag = '<%-';
+            $close_tag = '%>';
+        } else {
+            $open_tag = '<%=';
+            $close_tag = '%>';
+        }
+        $content = self::bladeVars2Js($matches['content']);
+        // If nothing was changed, then no JS syntax was applying. So no need to change Blade syntax.
+        if( $content === $matches['content'] ){
+            return $matches[0];
+        } else {
+            return $open_tag . $content . $close_tag;
+        }
+    }
+
+    /**
+     * Converts reusable block html to HTML which will be used for JS templating.
+     * Depends on JS templating library.
+     * Currently `Handlebars" is using.
+     *
+     * @param $html
+     * @return string|string[]|null
+     */
+    private static function bladeVars2Js($content)
+    {
+        // Replaces provided format of variables to JS templating syntax.
+        return preg_replace_callback(
+            '/ *(?<content>\$(?<varname1>[\w\d]+)(\[\'(?<varname2>[\w\d]+)\'\]){0,1} *\|*[^\!\}]*) */is',
+            static function ($matches) {
+                print_r($matches);
+                if (trim($matches['varname2'])) {
+                    $var = trim($matches['varname2']);
+                } elseif (trim($matches['varname1'])) {
+                    $var = trim($matches['varname1']);
+                } else {
+                    $var = $matches[0];
+                }
+                return $var;
+            },
+            $content
+        );
+    }
+
+    private static function bladeIfs2Js($content)
+    {
+        echo $content;
+        // Replaces provided format of variables to JS templating syntax.
+        return preg_replace_callback(
+            '/ *(?<content>\$(?<varname1>[\w\d]+)(\[\'(?<varname2>[\w\d]+)\'\]){0,1} *\|*[^\!\}]*) */is',
+            static function ($matches) {
+                print_r($matches);
+                if (trim($matches['varname2'])) {
+                    $var = trim($matches['varname2']);
+                } elseif (trim($matches['varname1'])) {
+                    $var = trim($matches['varname1']);
+                } else {
+                    $var = $matches[0];
+                }
+                return $var;
+            },
+            $content
+        );
+    }
+
+    /**
+     * Converts reusable block html to HTML which will be used for JS templating.
+     * Depends on JS templating library.
+     * Currently `Handlebars" is using.
+     *
+     * @param $html
+     * @return string|string[]|null
+     */
+    private static function _bladeVars2JsSyntax($html, $name)
+    {
+        // Replaces provided format of variables to JS templating syntax.
+        $html = preg_replace_callback(
             '/(?<open_tag>\{\{|\{\!\!) *(?<content>\$(?<varname1>[\w\d]+)(\[\'(?<varname2>[\w\d]+)\'\]){0,1} *\|*[^\!\}]*) *(?<close_tag>\!\!\}|\}\})/is',
             static function ($matches) {
                 $open_tag = trim($matches['open_tag']);
