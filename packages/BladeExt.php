@@ -118,7 +118,6 @@ class BladeExt extends BladeOne
         return preg_replace_callback(
             '/ *(?<content>\$(?<varname1>[\w\d]+)(\[\'(?<varname2>[\w\d]+)\'\]){0,1} *\|*[^\!\}]*) */is',
             static function ($matches) {
-                print_r($matches);
                 if (trim($matches['varname2'])) {
                     $var = trim($matches['varname2']);
                 } elseif (trim($matches['varname1'])) {
@@ -139,7 +138,6 @@ class BladeExt extends BladeOne
         return preg_replace_callback(
             '/ *(?<content>\$(?<varname1>[\w\d]+)(\[\'(?<varname2>[\w\d]+)\'\]){0,1} *\|*[^\!\}]*) */is',
             static function ($matches) {
-                print_r($matches);
                 if (trim($matches['varname2'])) {
                     $var = trim($matches['varname2']);
                 } elseif (trim($matches['varname1'])) {

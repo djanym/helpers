@@ -6,6 +6,15 @@ use eftec\bladeone\BladeOne;
 
 class TemplateHelper
 {
+    public static function load_template(string $template_file_path, array $vars = [])
+    {
+        if ($vars) {
+            extract($vars, EXTR_SKIP);
+        }
+
+        require $template_file_path;
+    }
+
     public static function reusableTemplateBlock(array $items, string $html)
     {
         $tpl = $html;
