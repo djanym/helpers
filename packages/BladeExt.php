@@ -97,7 +97,7 @@ class BladeExt extends BladeOne
         }
         $content = self::bladeVars2Js($matches['content']);
         // If nothing was changed, then no JS syntax was applying. So no need to change Blade syntax.
-        if( $content === $matches['content'] ){
+        if ($content === $matches['content']) {
             return $matches[0];
         } else {
             return $open_tag . $content . $close_tag;
@@ -188,5 +188,17 @@ class BladeExt extends BladeOne
         $tpl_id = $name . '_template';
 
         return '<div id="' . $tpl_id . '" style="display: none;">' . $html . '</div>';
+    }
+
+    public function compileJsAsset($expression)
+    {
+        $prefix_url = defined('JS_URL') ? "'" . JS_URL . "'" : '$this->baseUrl.\'/assets/js/\'';
+        return $this->phpTagEcho . " (isset(\$this->assetDict[$expression]))?\$this->assetDict[$expression]:" . $prefix_url . ".$expression; ?>";
+    }
+
+    public function compileCssAsset($expression)
+    {
+        $prefix_url = defined('CSS_URL') ? "'" . CSS_URL . "'" : '$this->baseUrl.\'/assets/css/\'';
+        return $this->phpTagEcho . " (isset(\$this->assetDict[$expression]))?\$this->assetDict[$expression]:" . $prefix_url . ".$expression; ?>";
     }
 }
