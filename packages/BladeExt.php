@@ -201,4 +201,10 @@ class BladeExt extends BladeOne
         $prefix_url = defined('CSS_URL') ? "'" . CSS_URL . "'" : '$this->baseUrl.\'/assets/css/\'';
         return $this->phpTagEcho . " (isset(\$this->assetDict[$expression]))?\$this->assetDict[$expression]:" . $prefix_url . ".$expression; ?>";
     }
+
+    public function compileImgAsset($expression)
+    {
+        $prefix_url = defined('IMAGES_URL') ? "'" . IMAGES_URL . "'" : '$this->baseUrl.\'/assets/images/\'';
+        return $this->phpTagEcho . " (isset(\$this->assetDict[$expression]))?\$this->assetDict[$expression]:" . $prefix_url . ".$expression; ?>";
+    }
 }
