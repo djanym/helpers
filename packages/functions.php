@@ -108,6 +108,19 @@ if (!function_exists('esc_html_e')):
     }
 endif;
 
+if (!function_exists('esc_attr')):
+    /**
+     * Escapes for HTML tag attributes.
+     *
+     * @param string $text
+     * @return string
+     */
+    function esc_attr($text)
+    {
+        echo DataHelper::esc_attr($text);
+    }
+endif;
+
 if (!function_exists('esc_attr_e')):
     /**
      * Display translated text that has been escaped for safe use in an attribute.
@@ -123,5 +136,18 @@ if (!function_exists('esc_attr_e')):
         echo DataHelper::esc_attr(
             LangHelper::__($text, $domain)
         );
+    }
+endif;
+
+if (!function_exists('esc_url')):
+    /**
+     * Checks and cleans a URL.
+     *
+     * @param string $url The URL to be cleaned.
+     * @return string The cleaned $url after the 'clean_url'.
+     */
+    function esc_url($url)
+    {
+        echo DataHelper::esc_url($url);
     }
 endif;

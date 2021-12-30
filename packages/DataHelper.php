@@ -66,6 +66,135 @@ class DataHelper
     }
 
     /**
+     * Checks and cleans a URL.
+     *
+     * A number of characters are removed from the URL. If the URL is for displaying
+     * (the default behaviour) ampersands are also replaced. The {@see 'clean_url'} filter
+     * is applied to the returned cleaned URL.
+     *
+     * @param string $url The URL to be cleaned.
+     * @param array $protocols Optional. An array of acceptable protocols.
+     *                          Defaults to return value of allowed_protocols()
+     * @param string $_context Private. Use esc_url_raw() for database usage.
+     * @return string The cleaned $url after the {@see 'clean_url'} filter is applied.
+     */
+    public static function esc_url($url, $protocols = null, $_context = 'display')
+    {
+        $original_url = $url;
+
+        if ('' == $url) {
+            return $url;
+        }
+
+        $url = str_replace(' ', '%20', ltrim($url));
+        $url = preg_replace('|[^a-z0-9-~+_.?#=!&;,/:%@$\|*\'()\[\]\\x80-\\xff]|i', '', $url);
+
+        if ('' === $url) {
+            return $url;
+        }
+
+        if (0 !== stripos($url, 'mailto:')) {
+            $strip = array('%0d', '%0a', '%0D', '%0A');
+            $url = _deep_replace($strip, $url);
+        }
+
+        $url = str_replace(';//', '://', $url);
+        /* If the URL doesn't appear to contain a scheme, we
+         * presume it needs http:// prepended (unless a relative
+         * link starting with /, # or ? or a php file).
+         */
+        if (strpos($url, ':') === false && !in_array($url[0], array('/', '#', '?')) &&
+            !preg_match('/^[a-z0-9-]+?\.php/i', $url)) {
+            $url = 'http://' . $url;
+        }
+
+        // Replace ampersands and single quotes only when displaying.
+        if ('display' == $_context) {
+            $url = self::kses_normalize_entities($url);
+            $url = str_replace(array('&amp;', "'"), array('&#038;', '&#039;'), $url);
+        }
+
+        if ((false !== strpos($url, '[')) || (false !== strpos($url, ']'))) {
+            $parsed = wp_parse_url($url);
+            $front = '';
+
+            if (isset($parsed['scheme'])) {
+                $front .= $parsed['scheme'] . '://';
+            } elseif ('/' === $url[0]) {
+                $front .= '//';
+            }
+
+            if (isset($parsed['user'])) {
+                $front .= $parsed['user'];
+            }
+
+            if (isset($parsed['pass'])) {
+                $front .= ':' . $parsed['pass'];
+            }
+
+            if (isset($parsed['user']) || isset($parsed['pass'])) {
+                $front .= '@';
+            }
+
+            if (isset($parsed['host'])) {
+                $front .= $parsed['host'];
+            }
+
+            if (isset($parsed['port'])) {
+                $front .= ':' . $parsed['port'];
+            }
+
+            $end_dirty = str_replace($front, '', $url);
+            $end_clean = str_replace(array('[', ']'), array('%5B', '%5D'), $end_dirty);
+            $url = str_replace($end_dirty, $end_clean, $url);
+        }
+
+        if ('/' === $url[0]) {
+            $good_protocol_url = $url;
+        } else {
+            if (!is_array($protocols)) {
+                $protocols = array(
+                    'http',
+                    'https',
+                    'ftp',
+                    'ftps',
+                    'mailto',
+                    'news',
+                    'irc',
+                    'gopher',
+                    'nntp',
+                    'feed',
+                    'telnet',
+                    'mms',
+                    'rtsp',
+                    'sms',
+                    'svn',
+                    'tel',
+                    'fax',
+                    'xmpp',
+                    'webcal',
+                    'urn'
+                );
+            }
+            $good_protocol_url = self::kses_bad_protocol($url, $protocols);
+            if (strtolower($good_protocol_url) != strtolower($url)) {
+                return '';
+            }
+        }
+
+        /**
+         * Filters a string cleaned and escaped for output as a URL.
+         *
+         * @param string $good_protocol_url The cleaned URL to be returned.
+         * @param string $original_url The URL prior to cleaning.
+         * @param string $_context If 'display', replace ampersands and single quotes only.
+         * @since 2.3.0
+         *
+         */
+        return apply_filters('clean_url', $good_protocol_url, $original_url, $_context);
+    }
+
+    /**
      * Escapes for HTML textarea values.
      *
      * @param string $text
@@ -389,5 +518,314 @@ class DataHelper
                 return (bool)preg_match("/^{$token}:[0-9.E+-]+;$end/", $data);
         }
         return false;
+    }
+
+    /**
+     * Converts and fixes HTML entities.
+     *
+     * This function normalizes HTML entities. It will convert `AT&T` to the correct
+     * `AT&amp;T`, `&#00058;` to `&#058;`, `&#XYZZY;` to `&amp;#XYZZY;` and so on.
+     *
+     * When `$context` is set to 'xml', HTML entities are converted to their code points.  For
+     * example, `AT&T&hellip;&#XYZZY;` is converted to `AT&amp;T…&amp;#XYZZY;`.
+     *
+     * @param string $string Content to normalize entities.
+     * @param string $context Context for normalization. Can be either 'html' or 'xml'.
+     *                        Default 'html'.
+     * @return string Content with normalized entities.
+     */
+    private static function kses_normalize_entities($string, $context = 'html')
+    {
+        // Disarm all entities by converting & to &amp;
+        $string = str_replace('&', '&amp;', $string);
+
+        // Change back the allowed entities in our list of allowed entities.
+        if ('xml' === $context) {
+            $string = preg_replace_callback('/&amp;([A-Za-z]{2,8}[0-9]{0,2});/', 'self::kses_xml_named_entities', $string);
+        } else {
+            $string = preg_replace_callback('/&amp;([A-Za-z]{2,8}[0-9]{0,2});/', 'self::kses_named_entities', $string);
+        }
+        $string = preg_replace_callback('/&amp;#(0*[0-9]{1,7});/', 'self::kses_normalize_entities2', $string);
+        $string = preg_replace_callback('/&amp;#[Xx](0*[0-9A-Fa-f]{1,6});/', 'self::kses_normalize_entities3', $string);
+
+        return $string;
+    }
+
+    /**
+     * Callback for `kses_normalize_entities()` regular expression.
+     *
+     * This function only accepts valid named entity references, which are finite,
+     * case-sensitive, and highly scrutinized by HTML and XML validators.
+     *
+     * @param array $matches preg_replace_callback() matches array.
+     * @return string Correctly encoded entity.
+     * @since 3.0.0
+     *
+     * @global array $allowedentitynames
+     *
+     */
+    private static function kses_named_entities($matches)
+    {
+        global $allowedentitynames;
+
+        if (empty($matches[1])) {
+            return '';
+        }
+
+        $i = $matches[1];
+        return (!in_array($i, $allowedentitynames, true)) ? "&amp;$i;" : "&$i;";
+    }
+
+    /**
+     * Callback for `kses_normalize_entities()` regular expression.
+     *
+     * This function only accepts valid named entity references, which are finite,
+     * case-sensitive, and highly scrutinized by XML validators.  HTML named entity
+     * references are converted to their code points.
+     *
+     * @param array $matches preg_replace_callback() matches array.
+     * @return string Correctly encoded entity.
+     * @global array $allowedxmlnamedentities
+     *
+     * @since 5.5.0
+     *
+     * @global array $allowedentitynames
+     */
+    private static function kses_xml_named_entities($matches)
+    {
+        global $allowedentitynames, $allowedxmlnamedentities;
+
+        if (empty($matches[1])) {
+            return '';
+        }
+
+        $i = $matches[1];
+
+        if (in_array($i, $allowedxmlnamedentities, true)) {
+            return "&$i;";
+        } elseif (in_array($i, $allowedentitynames, true)) {
+            return html_entity_decode("&$i;", ENT_HTML5);
+        }
+
+        return "&amp;$i;";
+    }
+
+    /**
+     * Callback for `kses_normalize_entities()` regular expression.
+     *
+     * This function helps `kses_normalize_entities()` to only accept 16-bit
+     * values and nothing more for `&#number;` entities.
+     *
+     * @access private
+     * @param array $matches `preg_replace_callback()` matches array.
+     * @return string Correctly encoded entity.
+     * @ignore
+     * @since 1.0.0
+     *
+     */
+    private static function kses_normalize_entities2($matches)
+    {
+        if (empty($matches[1])) {
+            return '';
+        }
+
+        $i = $matches[1];
+        if (valid_unicode($i)) {
+            $i = str_pad(ltrim($i, '0'), 3, '0', STR_PAD_LEFT);
+            $i = "&#$i;";
+        } else {
+            $i = "&amp;#$i;";
+        }
+
+        return $i;
+    }
+
+    /**
+     * Callback for `kses_normalize_entities()` for regular expression.
+     *
+     * This function helps `kses_normalize_entities()` to only accept valid Unicode
+     * numeric entities in hex form.
+     *
+     * @param array $matches `preg_replace_callback()` matches array.
+     * @return string Correctly encoded entity.
+     * @since 2.7.0
+     * @access private
+     * @ignore
+     *
+     */
+    private static function kses_normalize_entities3($matches)
+    {
+        if (empty($matches[1])) {
+            return '';
+        }
+
+        $hexchars = $matches[1];
+        return (!valid_unicode(hexdec($hexchars))) ? "&amp;#x$hexchars;" : '&#x' . ltrim($hexchars, '0') . ';';
+    }
+
+    /**
+     * Sanitizes a string and removed disallowed URL protocols.
+     *
+     * This function removes all non-allowed protocols from the beginning of the
+     * string. It ignores whitespace and the case of the letters, and it does
+     * understand HTML entities. It does its work recursively, so it won't be
+     * fooled by a string like `javascript:javascript:alert(57)`.
+     *
+     * @param string $string Content to filter bad protocols from.
+     * @param string[] $allowed_protocols Array of allowed URL protocols.
+     * @return string Filtered content.
+     */
+    private static function kses_bad_protocol($string, $allowed_protocols)
+    {
+        $string = self::kses_no_null($string);
+        $iterations = 0;
+
+        do {
+            $original_string = $string;
+            $string = self::kses_bad_protocol_once($string, $allowed_protocols);
+        } while ($original_string != $string && ++$iterations < 6);
+
+        if ($original_string != $string) {
+            return '';
+        }
+
+        return $string;
+    }
+
+    /**
+     * Sanitizes content from bad protocols and other characters.
+     *
+     * This function searches for URL protocols at the beginning of the string, while
+     * handling whitespace and HTML entities.
+     *
+     * @param string $string Content to check for bad protocols.
+     * @param string[] $allowed_protocols Array of allowed URL protocols.
+     * @param int $count Depth of call recursion to this function.
+     * @return string Sanitized content.
+     */
+    private static function kses_bad_protocol_once($string, $allowed_protocols, $count = 1)
+    {
+        $string = preg_replace('/(&#0*58(?![;0-9])|&#x0*3a(?![;a-f0-9]))/i', '$1;', $string);
+        $string2 = preg_split('/:|&#0*58;|&#x0*3a;|&colon;/i', $string, 2);
+        if (isset($string2[1]) && !preg_match('%/\?%', $string2[0])) {
+            $string = trim($string2[1]);
+            $protocol = self::kses_bad_protocol_once2($string2[0], $allowed_protocols);
+            if ('feed:' === $protocol) {
+                if ($count > 2) {
+                    return '';
+                }
+                $string = self::kses_bad_protocol_once($string, $allowed_protocols, ++$count);
+                if (empty($string)) {
+                    return $string;
+                }
+            }
+            $string = $protocol . $string;
+        }
+
+        return $string;
+    }
+
+    /**
+     * Callback for `kses_bad_protocol_once()` regular expression.
+     *
+     * This function processes URL protocols, checks to see if they're in the
+     * list of allowed protocols or not, and returns different data depending
+     * on the answer.
+     *
+     * @access private
+     *
+     * @param string $string URI scheme to check against the list of allowed protocols.
+     * @param string[] $allowed_protocols Array of allowed URL protocols.
+     * @return string Sanitized content.
+     */
+    private static function kses_bad_protocol_once2($string, $allowed_protocols)
+    {
+        $string2 = self::kses_decode_entities($string);
+        $string2 = preg_replace('/\s/', '', $string2);
+        $string2 = self::kses_no_null($string2);
+        $string2 = strtolower($string2);
+
+        $allowed = false;
+        foreach ((array)$allowed_protocols as $one_protocol) {
+            if (strtolower($one_protocol) == $string2) {
+                $allowed = true;
+                break;
+            }
+        }
+
+        if ($allowed) {
+            return "$string2:";
+        } else {
+            return '';
+        }
+    }
+
+    /**
+     * Removes any invalid control characters in a text string.
+     *
+     * Also removes any instance of the `\0` string.
+     *
+     * @param string $string Content to filter null characters from.
+     * @param array $options Set 'slash_zero' => 'keep' when '\0' is allowed. Default is 'remove'.
+     * @return string Filtered content.
+     */
+    private static function kses_no_null($string, $options = null)
+    {
+        if (!isset($options['slash_zero'])) {
+            $options = array('slash_zero' => 'remove');
+        }
+
+        $string = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $string);
+        if ('remove' === $options['slash_zero']) {
+            $string = preg_replace('/\\\\+0+/', '', $string);
+        }
+
+        return $string;
+    }
+
+    /**
+     * Converts all numeric HTML entities to their named counterparts.
+     *
+     * This function decodes numeric HTML entities (`&#65;` and `&#x41;`).
+     * It doesn't do anything with named entities like `&auml;`, but we don't
+     * need them in the allowed URL protocols system anyway.
+     *
+     * @param string $string Content to change entities.
+     * @return string Content after decoded entities.
+     * @since 1.0.0
+     *
+     */
+    private static function kses_decode_entities($string)
+    {
+        $string = preg_replace_callback('/&#([0-9]+);/', 'self::kses_decode_entities_chr', $string);
+        $string = preg_replace_callback('/&#[Xx]([0-9A-Fa-f]+);/', 'self::kses_decode_entities_chr_hexdec', $string);
+
+        return $string;
+    }
+
+    /**
+     * Regex callback for `wp_kses_decode_entities()`.
+     *
+     * @access private
+     *
+     * @param array $match preg match
+     * @return string
+     */
+    private static function kses_decode_entities_chr($match)
+    {
+        return chr($match[1]);
+    }
+
+    /**
+     * Regex callback for `wp_kses_decode_entities()`.
+     *
+     * @access private
+     *
+     * @param array $match preg match
+     * @return string
+     */
+    private static function kses_decode_entities_chr_hexdec($match)
+    {
+        return chr(hexdec($match[1]));
     }
 }
