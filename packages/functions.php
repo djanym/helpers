@@ -133,7 +133,7 @@ if (!function_exists('esc_attr')):
      */
     function esc_attr($text)
     {
-        echo DataHelper::esc_attr($text);
+        return DataHelper::esc_attr($text);
     }
 endif;
 
