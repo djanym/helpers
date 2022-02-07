@@ -21,7 +21,13 @@ class DataHelper
             foreach ($rules_array as $rule_key => $rule_value) {
                 // If rule has a value (like max length = 6)
                 if (is_string($rule_key)) {
-                    $v->rule($rule_key, $field_key, $rule_value);
+                    if ($rule_key === 'label') {
+                        $v->labels([$field_key => $rule_value]);
+                    } elseif ($rule_key === 'allowed_values') {
+                        $v->rule('in', $field_key, $rule_value);
+                    } else {
+                        $v->rule($rule_key, $field_key, $rule_value);
+                    }
                 } else { // If rule without values (like required), then $rule_value is the $rule_key
                     $v->rule($rule_value, $field_key);
                 }

@@ -1,5 +1,6 @@
 <?php
 
+use Ricubai\PHPHelpers\FormError;
 use Ricubai\PHPHelpers\LangHelper;
 use Ricubai\PHPHelpers\DataHelper;
 
@@ -28,7 +29,7 @@ if (!function_exists('is_error')):
      */
     function is_error($thing)
     {
-        return ($thing instanceof \Ricubai\PHPHelpers\FormError);
+        return ($thing instanceof FormError);
     }
 endif;
 
@@ -86,7 +87,24 @@ if (!function_exists('esc_html')):
      */
     function esc_html($text)
     {
-        return DataHelper::esc_html($text);
+        return DataHelper::esc_html($text, false);
+    }
+endif;
+
+if (!function_exists('esc_html__')):
+    /**
+     * Returns translated text that has been escaped for safe use in HTML output.
+     *
+     * @param string $text Text to translate.
+     * @param string $domain Optional. Text domain. Unique identifier for retrieving translated strings.
+     *                       Default 'default'.
+     */
+    function esc_html__($text, $domain = 'default')
+    {
+        return DataHelper::esc_html(
+            LangHelper::__($text, $domain),
+            false
+        );
     }
 endif;
 
@@ -97,8 +115,6 @@ if (!function_exists('esc_html_e')):
      * @param string $text Text to translate.
      * @param string $domain Optional. Text domain. Unique identifier for retrieving translated strings.
      *                       Default 'default'.
-     * @since 2.8.0
-     *
      */
     function esc_html_e($text, $domain = 'default')
     {
